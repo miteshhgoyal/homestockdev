@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build outputs
+build/
+dist/
+*.exe
+*.dmg
+*.AppImage
+
+# Logs
+logs/
+*.log
+
+# Downloads and processed files
+downloads/
+processed/
+
+# Settings
+settings.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+
+raw
+files-content.txt
+files-content
+file-dumper.py

@@ -1,0 +1,121 @@
+{
+    "name": "homestock-app",
+    "version": "0.1.0",
+    "description": "Stock Market Automation Desktop App",
+    "main": "electron/main.js",
+    "author": "Your Name",
+    "license": "MIT",
+    "keywords": [
+        "electron",
+        "stock",
+        "automation",
+        "nse",
+        "bse",
+        "desktop-app"
+    ],
+    "scripts": {
+        "dev": "webpack serve --mode development --port 3000",
+        "build": "webpack --mode production",
+        "electron": "electron .",
+        "electron-dev": "cross-env ELECTRON_START_URL=http://localhost:3000 NODE_ENV=development electron .",
+        "start": "npm run build && electron .",
+        "pack": "electron-builder --dir",
+        "dist": "npm run build && electron-builder",
+        "dist-win": "npm run build && electron-builder --win",
+        "dist-mac": "npm run build && electron-builder --mac",
+        "python": "cd python-backend && python main.py",
+        "dev:all": "concurrently \"npm run python\" \"npm run dev\" \"npm run wait-and-start\"",
+        "wait-and-start": "node -e \"setTimeout(() => require('child_process').exec('npm run electron-dev'), 5000)\""
+    },
+    "dependencies": {
+        "@tailwindcss/postcss": "^4.1.18",
+        "axios": "^1.13.2",
+        "date-fns": "^4.1.0",
+        "lucide-react": "^0.561.0",
+        "react": "^19.2.3",
+        "react-dom": "^19.2.3",
+        "react-router-dom": "^7.10.1"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.28.5",
+        "@babel/preset-react": "^7.28.5",
+        "autoprefixer": "^10.4.23",
+        "babel-loader": "^10.0.0",
+        "concurrently": "^9.2.1",
+        "cross-env": "^10.1.0",
+        "css-loader": "^7.1.2",
+        "electron": "^39.2.7",
+        "electron-builder": "^26.0.12",
+        "html-webpack-plugin": "^5.6.5",
+        "postcss": "^8.5.6",
+        "postcss-loader": "^8.2.0",
+        "style-loader": "^4.0.0",
+        "tailwindcss": "^4.1.18",
+        "webpack": "^5.104.0",
+        "webpack-cli": "^6.0.1",
+        "webpack-dev-server": "^5.2.2"
+    },
+    "build": {
+        "appId": "com.homestock.app",
+        "productName": "HomeStock",
+        "directories": {
+            "buildResources": "public",
+            "output": "dist"
+        },
+        "files": [
+            "build/**/*",
+            "electron/**/*",
+            "node_modules/**/*",
+            "package.json"
+        ],
+        "extraResources": [
+            {
+                "from": "python-backend/dist",
+                "to": "python-backend",
+                "filter": [
+                    "main.exe",
+                    "main",
+                    "_internal/**/*"
+                ]
+            },
+            {
+                "from": "downloads",
+                "to": "downloads"
+            },
+            {
+                "from": "processed",
+                "to": "processed"
+            },
+            {
+                "from": "logs",
+                "to": "logs"
+            }
+        ],
+        "win": {
+            "target": [
+                "nsis"
+            ],
+            "icon": "public/icon.ico"
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true,
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true
+        },
+        "mac": {
+            "target": [
+                "dmg"
+            ],
+            "icon": "public/icon.icns",
+            "category": "public.app-category.finance"
+        },
+        "linux": {
+            "target": [
+                "AppImage"
+            ],
+            "icon": "public/icon.png",
+            "category": "Finance"
+        }
+    }
+}
