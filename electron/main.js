@@ -98,7 +98,7 @@ function startPythonBackend() {
 
             if (isReady) {
                 clearInterval(checkInterval);
-                console.log('✅ Python backend is ready!');
+                console.log('Python backend is ready!');
                 resolve();
             } else if (attempts >= maxAttempts) {
                 clearInterval(checkInterval);
@@ -136,7 +136,7 @@ function createWindow() {
     // Show window when ready
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();
-        console.log('✅ Application window ready');
+        console.log('Application window ready');
     });
 
     // Open DevTools in development
@@ -157,7 +157,7 @@ function createWindow() {
 // App ready event
 app.whenReady().then(async () => {
     try {
-        console.log('🚀 Starting HomeStock Application...');
+        console.log(' Starting HomeStock Application...');
         console.log('Environment:', process.env.NODE_ENV || 'production');
         console.log('Platform:', process.platform);
 
@@ -167,10 +167,10 @@ app.whenReady().then(async () => {
         // Then create window
         createWindow();
 
-        console.log('✅ Application started successfully');
+        console.log('Application started successfully');
 
     } catch (error) {
-        console.error('❌ Failed to start application:', error);
+        console.error('Failed to start application:', error);
 
         // Show error dialog to user
         dialog.showErrorBox(
@@ -209,5 +209,5 @@ app.on('before-quit', () => {
 
 // Handle errors
 process.on('uncaughtException', (error) => {
-    console.error('❌ Uncaught Exception:', error);
+    console.error('Uncaught Exception:', error);
 });

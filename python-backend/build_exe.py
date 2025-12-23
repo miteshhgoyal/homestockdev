@@ -40,30 +40,43 @@ def build_executable():
         '--hidden-import=uvicorn.lifespan.on',
         '--hidden-import=fastapi',
         '--hidden-import=pydantic',
+        '--hidden-import=pydantic.dataclasses',
+        '--hidden-import=pydantic_core',
         '--hidden-import=starlette',
+        '--hidden-import=starlette.routing',
         '--hidden-import=openpyxl',
+        '--hidden-import=openpyxl.styles',
         '--hidden-import=pandas',
+        '--hidden-import=pandas._libs',
         '--hidden-import=apscheduler',
         '--hidden-import=apscheduler.schedulers.background',
         '--hidden-import=apscheduler.triggers.cron',
         '--hidden-import=requests',
+        '--hidden-import=zipfile',
+        '--hidden-import=shutil',
         
         # Collect all packages
         '--collect-all=uvicorn',
         '--collect-all=fastapi',
         '--collect-all=starlette',
+        '--collect-all=pydantic',
+        '--collect-all=pydantic_core',
     ]
     
+    print("=" * 60)
     print("Starting PyInstaller build...")
+    print("=" * 60)
     PyInstaller.__main__.run(args)
-    print("✅ Build complete! Executable created in dist/ folder")
+    print("=" * 60)
+    print("Build complete! Executable created in dist/ folder")
+    print("=" * 60)
 
 if __name__ == '__main__':
     # Check if PyInstaller is installed
     try:
         import PyInstaller
     except ImportError:
-        print("❌ PyInstaller not found. Installing...")
+        print("PyInstaller not found. Installing...")
         os.system(f"{sys.executable} -m pip install pyinstaller")
     
     build_executable()

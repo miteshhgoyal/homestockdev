@@ -8,11 +8,11 @@ HomeStock is a desktop application that automates downloading and processing sto
 
 ## Features
 
-✅ Automatic daily downloads of market data  
-✅ Excel file processing and transformation  
-✅ Scheduled automation  
-✅ View and manage downloaded files  
-✅ Real-time logs monitoring  
+Automatic daily downloads of market data  
+Excel file processing and transformation  
+Scheduled automation  
+View and manage downloaded files  
+Real-time logs monitoring  
 
 ## Installation
 

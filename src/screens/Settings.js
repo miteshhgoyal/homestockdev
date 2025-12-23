@@ -24,7 +24,8 @@ function Settings() {
         download_path: 'downloads',
         processed_path: 'processed',
         scheduler_time: '18:45',  // Updated default to 6:45 PM
-        scheduler_enabled: false
+        scheduler_enabled: false,
+        scheduler_manual_date: null
     });
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState(null);
@@ -151,7 +152,7 @@ function Settings() {
 
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100" style={{ padding: '32px' }}>
+        <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-slate-100" style={{ padding: '32px' }}>
             {/* Header */}
             <div style={{ marginBottom: '32px' }}>
                 <h1 className="text-4xl font-bold text-slate-900" style={{ marginBottom: '8px' }}>Settings</h1>
@@ -166,7 +167,7 @@ function Settings() {
                 {/* Main Settings Card */}
                 <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
                     {/* Card Header */}
-                    <div className="bg-gradient-to-r from-slate-800 to-slate-900 border-b border-slate-700"
+                    <div className="bg-linear-to-r from-slate-800 to-slate-900 border-b border-slate-700"
                         style={{ paddingLeft: '24px', paddingRight: '24px', paddingTop: '16px', paddingBottom: '16px' }}>
                         <div className="flex items-center" style={{ gap: '12px' }}>
                             <div className="bg-white/10 backdrop-blur-sm rounded-lg" style={{ padding: '8px' }}>
@@ -288,9 +289,47 @@ function Settings() {
                                 )}
                             </div>
 
+                            {/* Manual Date Selection for Testing */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                <label className="block text-sm font-semibold text-slate-700 flex items-center" style={{ gap: '8px' }}>
+                                    <Calendar size={16} className="text-purple-500" />
+                                    Manual Download Date (For Testing)
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="date"
+                                        value={settings.scheduler_manual_date || ''}
+                                        onChange={(e) => setSettings({
+                                            ...settings,
+                                            scheduler_manual_date: e.target.value || null
+                                        })}
+                                        className="w-full border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all font-mono text-sm text-slate-700"
+                                        style={{ paddingLeft: '44px', paddingRight: '16px', paddingTop: '14px', paddingBottom: '14px' }}
+                                    />
+                                    <Calendar size={16} className="absolute top-1/2 -translate-y-1/2 text-slate-400" style={{ left: '16px' }} />
+                                    {settings.scheduler_manual_date && (
+                                        <button
+                                            onClick={() => setSettings({ ...settings, scheduler_manual_date: null })}
+                                            className="absolute top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-600"
+                                            style={{ right: '16px' }}
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+                                </div>
+                                <p className="text-xs text-slate-500" style={{ marginLeft: '4px' }}>
+                                    {settings.scheduler_manual_date ? (
+                                        <span className="text-purple-600 font-semibold">
+                                            Testing Mode: Scheduler will download data for {new Date(settings.scheduler_manual_date).toLocaleDateString('en-IN')}
+                                        </span>
+                                    ) : (
+                                        <span>Leave empty for normal operation (downloads today's data)</span>
+                                    )}
+                                </p>
+                            </div>
 
                             {/* Scheduler Toggle */}
-                            <div className={`bg-gradient-to-br rounded-xl border-2 transition-all ${settings.scheduler_enabled
+                            <div className={`bg-linear-to-br rounded-xl border-2 transition-all ${settings.scheduler_enabled
                                 ? 'from-emerald-50 to-green-50 border-emerald-300'
                                 : 'from-slate-50 to-gray-50 border-slate-200'
                                 }`} style={{ padding: '24px' }}>
@@ -332,8 +371,8 @@ function Settings() {
                                     <button
                                         onClick={handleSchedulerToggle}
                                         className={`flex items-center rounded-xl font-semibold transition-all shadow-md hover:shadow-lg ${settings.scheduler_enabled
-                                            ? 'bg-gradient-to-r from-red-600 to-red-500 text-white hover:from-red-700 hover:to-red-600'
-                                            : 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:from-emerald-700 hover:to-emerald-600'
+                                            ? 'bg-linear-to-r from-red-600 to-red-500 text-white hover:from-red-700 hover:to-red-600'
+                                            : 'bg-linear-to-r from-emerald-600 to-emerald-500 text-white hover:from-emerald-700 hover:to-emerald-600'
                                             }`}
                                         style={{ gap: '8px', paddingLeft: '24px', paddingRight: '24px', paddingTop: '12px', paddingBottom: '12px' }}
                                     >
@@ -359,7 +398,7 @@ function Settings() {
                             <button
                                 onClick={handleSave}
                                 disabled={loading || !hasChanges}
-                                className="flex-1 flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-600 disabled:from-slate-300 disabled:to-slate-300 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl disabled:shadow-none"
+                                className="flex-1 flex items-center justify-center bg-linear-to-r from-blue-600 to-blue-500 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-blue-600 disabled:from-slate-300 disabled:to-slate-300 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl disabled:shadow-none"
                                 style={{ gap: '8px', paddingTop: '16px', paddingBottom: '16px' }}
                             >
                                 {loading ? (
@@ -388,10 +427,10 @@ function Settings() {
                         {/* Message Display */}
                         {message && (
                             <div className={`rounded-xl border-2 transition-all ${message.type === 'success'
-                                ? 'bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200'
+                                ? 'bg-linear-to-br from-emerald-50 to-green-50 border-emerald-200'
                                 : message.type === 'warning'
-                                    ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200'
-                                    : 'bg-gradient-to-br from-red-50 to-rose-50 border-red-200'
+                                    ? 'bg-linear-to-br from-amber-50 to-yellow-50 border-amber-200'
+                                    : 'bg-linear-to-br from-red-50 to-rose-50 border-red-200'
                                 }`} style={{ padding: '16px' }}>
                                 <div className="flex items-center" style={{ gap: '12px' }}>
                                     <div className={`rounded-lg ${message.type === 'success'
@@ -424,7 +463,7 @@ function Settings() {
 
 
                 {/* Info Card */}
-                <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl shadow-lg border border-slate-700"
+                <div className="bg-linear-to-r from-slate-800 to-slate-900 rounded-2xl shadow-lg border border-slate-700"
                     style={{ marginTop: '24px', padding: '24px' }}>
                     <div className="flex items-start" style={{ gap: '16px' }}>
                         <div className="bg-white/10 backdrop-blur-sm rounded-xl flex-shrink-0" style={{ padding: '12px' }}>

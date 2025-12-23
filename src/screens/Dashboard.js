@@ -9,7 +9,8 @@ import {
     CheckCircle2,
     XCircle,
     Lightbulb,
-    RefreshCw
+    RefreshCw,
+    FileText
 } from 'lucide-react';
 
 function Dashboard() {
@@ -18,11 +19,20 @@ function Dashboard() {
     const [stats, setStats] = useState({
         lastRun: 'Never',
         filesDownloaded: 0,
+        filesProcessed: 0,
         nextScheduled: 'Not scheduled'
     });
 
     useEffect(() => {
         checkBackend();
+        loadStats();
+
+        // Refresh stats every 30 seconds
+        const interval = setInterval(() => {
+            loadStats();
+        }, 30000);
+
+        return () => clearInterval(interval);
     }, []);
 
     const checkBackend = async () => {
@@ -34,6 +44,31 @@ function Dashboard() {
             setBackendStatus('disconnected');
         } finally {
             setIsChecking(false);
+        }
+    };
+
+    const loadStats = async () => {
+        try {
+            // Get file stats
+            const statsResponse = await api.get('/api/files/stats');
+
+            // Get scheduler status
+            const schedulerResponse = await api.get('/api/scheduler/status');
+
+            setStats({
+                filesDownloaded: statsResponse.data.downloaded.count,
+                filesProcessed: statsResponse.data.processed.count,
+                nextScheduled: schedulerResponse.data.next_run
+                    ? new Date(schedulerResponse.data.next_run).toLocaleString('en-IN', {
+                        timeZone: 'Asia/Kolkata',
+                        dateStyle: 'medium',
+                        timeStyle: 'short'
+                    })
+                    : 'Not scheduled',
+                lastRun: 'Check logs for details'
+            });
+        } catch (error) {
+            console.error('Failed to load stats:', error);
         }
     };
 
@@ -73,24 +108,29 @@ function Dashboard() {
     const StatusIcon = statusConfig.icon;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100" style={{ padding: '32px' }}>
+        <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-slate-100" style={{ padding: '32px' }}>
             {/* Header */}
             <div style={{ marginBottom: '32px' }}>
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-4xl font-bold text-slate-900" style={{ marginBottom: '8px' }}>Dashboard</h1>
+                        <h1 className="text-4xl font-bold text-slate-900" style={{ marginBottom: '8px' }}>
+                            Dashboard
+                        </h1>
                         <p className="text-slate-600 flex items-center" style={{ gap: '8px' }}>
                             <TrendingUp size={16} />
                             Stock Automation Overview
                         </p>
                     </div>
                     <button
-                        onClick={checkBackend}
+                        onClick={() => {
+                            checkBackend();
+                            loadStats();
+                        }}
                         disabled={isChecking}
                         className="flex items-center bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm hover:shadow-md disabled:opacity-50"
                         style={{ gap: '8px', paddingLeft: '16px', paddingRight: '16px', paddingTop: '10px', paddingBottom: '10px' }}
                     >
-                        <RefreshCw size={16} className={`${isChecking ? 'animate-spin' : ''}`} />
+                        <RefreshCw size={16} className={isChecking ? 'animate-spin' : ''} />
                         <span className="font-medium text-slate-700">Refresh</span>
                     </button>
                 </div>
@@ -98,12 +138,11 @@ function Dashboard() {
 
             {/* Backend Status Card */}
             <div style={{ marginBottom: '32px' }}>
-                <div className={`${statusConfig.bgColor} border ${statusConfig.borderColor} rounded-xl shadow-sm transition-all`}
-                    style={{ padding: '24px' }}>
+                <div className={`${statusConfig.bgColor} border ${statusConfig.borderColor} rounded-xl shadow-sm transition-all`} style={{ padding: '24px' }}>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center" style={{ gap: '16px' }}>
                             <div className={`${statusConfig.iconBg} rounded-xl`} style={{ padding: '12px' }}>
-                                <StatusIcon className={statusConfig.color} size={24} strokeWidth={2.5} />
+                                <StatusIcon className={`${statusConfig.color}`} size={24} strokeWidth={2.5} />
                             </div>
                             <div>
                                 <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wide" style={{ marginBottom: '4px' }}>
@@ -115,8 +154,7 @@ function Dashboard() {
                             </div>
                         </div>
                         {backendStatus === 'connected' && (
-                            <div className="flex items-center bg-white rounded-lg border border-emerald-200"
-                                style={{ gap: '8px', paddingLeft: '12px', paddingRight: '12px', paddingTop: '6px', paddingBottom: '6px' }}>
+                            <div className="flex items-center bg-white rounded-lg border border-emerald-200" style={{ gap: '8px', paddingLeft: '12px', paddingRight: '12px', paddingTop: '6px', paddingBottom: '6px' }}>
                                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
                                 <span className="text-xs font-semibold text-emerald-700">Live</span>
                             </div>
@@ -127,58 +165,60 @@ function Dashboard() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: '24px', marginBottom: '32px' }}>
-                {/* Last Run Card */}
-                <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all border border-slate-200 group"
-                    style={{ padding: '24px' }}>
-                    <div className="flex items-start justify-between" style={{ marginBottom: '16px' }}>
-                        <div className="bg-purple-100 rounded-xl group-hover:scale-110 transition-transform"
-                            style={{ padding: '12px' }}>
-                            <Clock className="text-purple-600" size={24} strokeWidth={2.5} />
-                        </div>
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                            Activity
-                        </span>
-                    </div>
-                    <h3 className="text-sm font-semibold text-slate-600" style={{ marginBottom: '8px' }}>Last Run</h3>
-                    <p className="text-3xl font-bold text-slate-900">{stats.lastRun}</p>
-                    <div className="border-t border-slate-100" style={{ marginTop: '16px', paddingTop: '16px' }}>
-                        <p className="text-xs text-slate-500">Most recent execution</p>
-                    </div>
-                </div>
-
                 {/* Files Downloaded Card */}
-                <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all border border-slate-200 group"
-                    style={{ padding: '24px' }}>
+                <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all border border-slate-200 group" style={{ padding: '24px' }}>
                     <div className="flex items-start justify-between" style={{ marginBottom: '16px' }}>
-                        <div className="bg-blue-100 rounded-xl group-hover:scale-110 transition-transform"
-                            style={{ padding: '12px' }}>
+                        <div className="bg-blue-100 rounded-xl group-hover:scale-110 transition-transform" style={{ padding: '12px' }}>
                             <Download className="text-blue-600" size={24} strokeWidth={2.5} />
                         </div>
                         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
                             Total
                         </span>
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-600" style={{ marginBottom: '8px' }}>Files Downloaded</h3>
+                    <h3 className="text-sm font-semibold text-slate-600" style={{ marginBottom: '8px' }}>
+                        Files Downloaded
+                    </h3>
                     <p className="text-3xl font-bold text-blue-600">{stats.filesDownloaded}</p>
                     <div className="border-t border-slate-100" style={{ marginTop: '16px', paddingTop: '16px' }}>
                         <p className="text-xs text-slate-500">Bhavcopy files archived</p>
                     </div>
                 </div>
 
-                {/* Next Scheduled Card */}
-                <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all border border-slate-200 group"
-                    style={{ padding: '24px' }}>
+                {/* Files Processed Card */}
+                <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all border border-slate-200 group" style={{ padding: '24px' }}>
                     <div className="flex items-start justify-between" style={{ marginBottom: '16px' }}>
-                        <div className="bg-indigo-100 rounded-xl group-hover:scale-110 transition-transform"
-                            style={{ padding: '12px' }}>
+                        <div className="bg-purple-100 rounded-xl group-hover:scale-110 transition-transform" style={{ padding: '12px' }}>
+                            <FileText className="text-purple-600" size={24} strokeWidth={2.5} />
+                        </div>
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                            Completed
+                        </span>
+                    </div>
+                    <h3 className="text-sm font-semibold text-slate-600" style={{ marginBottom: '8px' }}>
+                        Files Processed
+                    </h3>
+                    <p className="text-3xl font-bold text-purple-600">{stats.filesProcessed}</p>
+                    <div className="border-t border-slate-100" style={{ marginTop: '16px', paddingTop: '16px' }}>
+                        <p className="text-xs text-slate-500">Excel files generated</p>
+                    </div>
+                </div>
+
+                {/* Next Scheduled Card */}
+                <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all border border-slate-200 group" style={{ padding: '24px' }}>
+                    <div className="flex items-start justify-between" style={{ marginBottom: '16px' }}>
+                        <div className="bg-indigo-100 rounded-xl group-hover:scale-110 transition-transform" style={{ padding: '12px' }}>
                             <Calendar className="text-indigo-600" size={24} strokeWidth={2.5} />
                         </div>
                         <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
                             Upcoming
                         </span>
                     </div>
-                    <h3 className="text-sm font-semibold text-slate-600" style={{ marginBottom: '8px' }}>Next Scheduled</h3>
-                    <p className="text-3xl font-bold text-slate-900">{stats.nextScheduled}</p>
+                    <h3 className="text-sm font-semibold text-slate-600" style={{ marginBottom: '8px' }}>
+                        Next Scheduled
+                    </h3>
+                    <p className="text-xl font-bold text-slate-900" style={{ lineHeight: '1.4' }}>
+                        {stats.nextScheduled}
+                    </p>
                     <div className="border-t border-slate-100" style={{ marginTop: '16px', paddingTop: '16px' }}>
                         <p className="text-xs text-slate-500">Automated download time</p>
                     </div>
@@ -186,14 +226,15 @@ function Dashboard() {
             </div>
 
             {/* Info Alert */}
-            <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-lg border border-blue-400"
-                style={{ padding: '24px' }}>
+            <div className="bg-linear-to-r from-blue-500 to-blue-600 rounded-2xl shadow-lg border border-blue-400" style={{ padding: '24px' }}>
                 <div className="flex items-start" style={{ gap: '16px' }}>
                     <div className="bg-white/20 backdrop-blur-sm rounded-xl flex-shrink-0" style={{ padding: '12px' }}>
                         <Lightbulb className="text-white" size={24} strokeWidth={2.5} />
                     </div>
                     <div className="flex-1">
-                        <h4 className="text-white font-bold text-lg" style={{ marginBottom: '4px' }}>Quick Tip</h4>
+                        <h4 className="text-white font-bold text-lg" style={{ marginBottom: '4px' }}>
+                            Quick Tip
+                        </h4>
                         <p className="text-blue-50 text-sm" style={{ lineHeight: '1.6' }}>
                             Navigate to the <strong className="text-white">Downloads</strong> section to start downloading NSE Bhavcopy files.
                             You can schedule automatic downloads or trigger them manually.

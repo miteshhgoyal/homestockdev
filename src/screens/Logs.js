@@ -160,7 +160,7 @@ function Logs() {
 
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100" style={{ padding: '32px' }}>
+        <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-slate-100" style={{ padding: '32px' }}>
             {/* Header */}
             <div style={{ marginBottom: '24px' }}>
                 <div className="flex items-center justify-between" style={{ marginBottom: '16px' }}>
@@ -193,7 +193,7 @@ function Logs() {
                         <button
                             onClick={fetchLogs}
                             disabled={loading}
-                            className="flex items-center bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:from-blue-700 hover:to-blue-600 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+                            className="flex items-center bg-linear-to-r from-blue-600 to-blue-500 text-white rounded-xl hover:from-blue-700 hover:to-blue-600 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
                             style={{ gap: '8px', paddingLeft: '16px', paddingRight: '16px', paddingTop: '10px', paddingBottom: '10px' }}
                         >
                             <RefreshCw size={16} className={`${loading ? 'animate-spin' : ''}`} />
@@ -295,8 +295,8 @@ function Logs() {
                     <button
                         onClick={() => setAutoScroll(!autoScroll)}
                         className={`flex items-center rounded-lg transition-all font-medium text-sm ${autoScroll
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                             }`}
                         style={{ gap: '6px', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px' }}
                     >
@@ -308,7 +308,7 @@ function Logs() {
 
             {/* Log Console */}
             <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden relative">
-                <div className="bg-gradient-to-r from-slate-800 to-slate-900 flex items-center justify-between border-b border-slate-700"
+                <div className="bg-linear-to-r from-slate-800 to-slate-900 flex items-center justify-between border-b border-slate-700"
                     style={{ paddingLeft: '24px', paddingRight: '24px', paddingTop: '16px', paddingBottom: '16px' }}>
                     <div className="flex items-center" style={{ gap: '12px' }}>
                         <div className="flex" style={{ gap: '8px' }}>
@@ -398,7 +398,7 @@ function Logs() {
 
 
             {/* Info Footer */}
-            <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl shadow-lg border border-slate-700"
+            <div className="bg-linear-to-r from-slate-800 to-slate-900 rounded-2xl shadow-lg border border-slate-700"
                 style={{ marginTop: '24px', padding: '24px' }}>
                 <div className="flex items-start" style={{ gap: '16px' }}>
                     <div className="bg-white/10 backdrop-blur-sm rounded-xl flex-shrink-0" style={{ padding: '12px' }}>

@@ -15,9 +15,8 @@ import zipfile
 import pandas as pd
 
 
-
+# ===== FASTAPI APP INITIALIZATION =====
 app = FastAPI()
-
 
 
 app.add_middleware(
@@ -28,16 +27,15 @@ app.add_middleware(
 )
 
 
-
+# ===== SCHEDULER INITIALIZATION =====
 scheduler = BackgroundScheduler()
 scheduler.start()
 
 
-
+# ===== LOGGING SETUP =====
 log_dir = os.path.join(os.path.dirname(__file__), '..', 'logs')
 os.makedirs(log_dir, exist_ok=True)
 log_file = os.path.join(log_dir, 'app.log')
-
 
 
 logging.basicConfig(
@@ -47,18 +45,17 @@ logging.basicConfig(
 )
 
 
-
+# ===== DIRECTORY SETUP =====
 downloads_dir = os.path.join(os.path.dirname(__file__), '..', 'downloads')
 processed_dir = os.path.join(os.path.dirname(__file__), '..', 'processed')
 os.makedirs(downloads_dir, exist_ok=True)
 os.makedirs(processed_dir, exist_ok=True)
 
 
-
 settings_file = os.path.join(os.path.dirname(__file__), '..', 'settings.json')
 
 
-
+# ===== PYDANTIC MODELS =====
 class DownloadRequest(BaseModel):
     date_from: str
     date_to: str
@@ -66,10 +63,8 @@ class DownloadRequest(BaseModel):
     custom_url: Optional[str] = None
 
 
-
 class ProcessRequest(BaseModel):
     file_path: str
-
 
 
 class SettingsModel(BaseModel):
@@ -77,9 +72,10 @@ class SettingsModel(BaseModel):
     processed_path: str
     scheduler_time: str
     scheduler_enabled: bool
+    scheduler_manual_date: Optional[str] = None
 
 
-
+# ===== SETTINGS FUNCTIONS =====
 def load_settings():
     if os.path.exists(settings_file):
         with open(settings_file, 'r') as f:
@@ -88,9 +84,9 @@ def load_settings():
         "download_path": "downloads",
         "processed_path": "processed",
         "scheduler_time": "18:45",
-        "scheduler_enabled": False
+        "scheduler_enabled": False,
+        "scheduler_manual_date": None
     }
-
 
 
 def save_settings_file(settings):
@@ -98,13 +94,16 @@ def save_settings_file(settings):
         json.dump(settings, f, indent=2)
 
 
-
+# ===== DOWNLOAD URL GENERATOR (FIXED URLS) =====
 def get_download_url(date_obj, job_type):
-    """Generate the correct URL based on job type - UPDATED for NEW NSE format"""
+    """Generate the correct URL based on job type - FIXED December 2025"""
     
     if job_type == "NSE Bhavcopy":
-        formatted_date = date_obj.strftime('%Y%m%d')
-        url = f"https://nsearchives.nseindia.com/content/cm/BhavCopy_NSE_CM_0_0_0_{formatted_date}_F_0000.csv.zip"
+        # WORKING FORMAT (Confirmed Dec 2025)
+        # Format: PR[DDMMYY].zip
+        # Example: Dec 19, 2025 → PR191225.zip
+        formatted_date = date_obj.strftime('%d%m%y')
+        url = f"https://nsearchives.nseindia.com/archives/equities/bhavcopy/pr/PR{formatted_date}.zip"
         
     elif job_type == "NSE Delivery":
         formatted_date = date_obj.strftime('%d%m%Y')
@@ -120,7 +119,7 @@ def get_download_url(date_obj, job_type):
     return url
 
 
-
+# ===== FILE DOWNLOAD FUNCTION (WITH RETRY LOGIC) =====
 def download_file(date_str, job_type):
     """Download file for a specific date and job type"""
     try:
@@ -161,9 +160,9 @@ def download_file(date_str, job_type):
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == 404:
             error_msg = f"File not found for {date_str} (likely holiday/weekend or data not available yet)"
-            logging.error(error_msg)
+            logging.warning(error_msg)
         else:
-            error_msg = f"Failed to download {date_str}: {str(e)}"
+            error_msg = f"HTTP Error {e.response.status_code} for {date_str}: {str(e)}"
             logging.error(error_msg)
         return False, error_msg
     except Exception as e:
@@ -172,204 +171,173 @@ def download_file(date_str, job_type):
         return False, error_msg
 
 
+# ===== SCHEDULED TASK FUNCTIONS =====
+def scheduled_download_task():
+    """Task that runs on schedule - downloads NSE Bhavcopy for configured date"""
+    try:
+        logging.info("🔔 Running scheduled download task")
+        
+        # Load settings to check if manual date is set
+        settings = load_settings()
+        manual_date = settings.get('scheduler_manual_date', None)
+        
+        if manual_date:
+            # Use manual date for testing
+            logging.info(f"Using manual date for testing: {manual_date}")
+            download_date = datetime.strptime(manual_date, '%Y-%m-%d')
+        else:
+            # Use today's date (production behavior)
+            download_date = datetime.now()
+            
+            # Skip weekends
+            if download_date.weekday() >= 5:
+                logging.info("Skipping scheduled download - weekend")
+                return
+        
+        date_str = download_date.strftime('%Y-%m-%d')
+        logging.info(f"Downloading data for: {date_str}")
+        
+        success, message = download_file(date_str, "NSE Bhavcopy")
+        
+        if not success and "File not found" in message:
+            logging.warning("Data not available yet, will retry in next scheduled run")
+        elif success:
+            logging.info(f"Scheduled download successful: {message}")
+        else:
+            logging.error(f"Scheduled download failed: {message}")
+            
+    except Exception as e:
+        logging.error(f"Scheduled task error: {str(e)}")
 
-def scheduled_task():
-    """Task that runs on schedule with retry logic"""
-    logging.info("Running scheduled download task")
-    today = datetime.now().strftime('%Y-%m-%d')
-    
-    success, message = download_file(today, "NSE Bhavcopy")
-    
-    if not success and "File not found" in message:
-        logging.warning("Data not available yet, scheduling retry in 30 minutes")
-        retry_time = datetime.now() + timedelta(minutes=30)
-        scheduler.add_job(
-            retry_download_task,
-            'date',
-            run_date=retry_time,
-            args=[today],
-            id=f'retry_{today}',
-            replace_existing=True
-        )
-    elif success:
-        logging.info(f"Scheduled download successful: {message}")
+
+def reload_scheduler_from_settings():
+    """Load scheduler config from settings and start if enabled"""
+    try:
+        settings = load_settings()
+        if settings.get('scheduler_enabled', False):
+            scheduler_time = settings.get('scheduler_time', '18:45')
+            hour, minute = map(int, scheduler_time.split(':'))
+            
+            # Remove existing job if any
+            try:
+                scheduler.remove_job('daily_download')
+                logging.info("Removed existing scheduler job")
+            except:
+                pass
+            
+            # Add new job
+            scheduler.add_job(
+                scheduled_download_task,
+                trigger='cron',
+                hour=hour,
+                minute=minute,
+                id='daily_download',
+                replace_existing=True
+            )
+            logging.info(f"📅 Scheduler loaded: Daily job at {scheduler_time}")
+        else:
+            logging.info("Scheduler disabled in settings")
+    except Exception as e:
+        logging.error(f"Failed to reload scheduler: {str(e)}")
 
 
-
-def retry_download_task(date_str):
-    """Retry task for failed downloads"""
-    logging.info(f"Retrying download for {date_str}")
-    success, message = download_file(date_str, "NSE Bhavcopy")
-    if success:
-        logging.info(f"Retry successful: {message}")
-    else:
-        logging.error(f"Retry failed: {message}")
-
+# Load scheduler on startup
+reload_scheduler_from_settings()
 
 
 # ===== EXCEL PROCESSING FUNCTIONS =====
 
-def process_nse_bhavcopy(file_path):
-    """Process NSE Bhavcopy CSV files"""
+@app.post("/api/process_excel")
+async def process_excel(request: ProcessRequest):
+    """UNIVERSAL PROCESSOR - Handles ALL file types"""
     try:
-        logging.info(f"Processing NSE Bhavcopy: {file_path}")
+        file_path = request.file_path
         
-        # Read CSV file
-        df = pd.read_csv(file_path)
+        # If just filename is provided, make it absolute path
+        if not os.path.isabs(file_path):
+            file_path = os.path.join(downloads_dir, file_path)
         
-        logging.info(f"Read {len(df)} rows from NSE Bhavcopy")
-        logging.info(f"Columns: {df.columns.tolist()}")
+        logging.info(f"📄 Processing file: {file_path}")
         
-        # Handle both new and old NSE formats
-        if 'TrdSymb' in df.columns:  # New format
-            df_filtered = df[df['Series'] == 'EQ'].copy()
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
+        
+        filename = os.path.basename(file_path)
+        
+        # UNIVERSAL FILE READER
+        try:
+            # Try to read as CSV first (most NSE files are CSV or no extension)
+            if file_path.endswith('.csv') or not '.' in filename or filename.endswith(tuple('0123456789')):
+                # Many NSE files have no extension or end with date
+                df = pd.read_csv(file_path)
+                
+            elif file_path.endswith(('.xlsx', '.xls')):
+                df = pd.read_excel(file_path)
+                
+            elif file_path.endswith(('.zip', '.ZIP')):
+                # Extract and process
+                extract_dir = os.path.dirname(file_path)
+                with zipfile.ZipFile(file_path, 'r') as zip_ref:
+                    zip_ref.extractall(extract_dir)
+                
+                # Find CSV files (look for pd*, pr*, or .csv files)
+                csv_files = [f for f in os.listdir(extract_dir) 
+                           if f.endswith('.csv') or f.startswith('pd') or f.startswith('pr')]
+                
+                if csv_files:
+                    # Process the first CSV found (usually pd* is primary data)
+                    csv_path = os.path.join(extract_dir, csv_files[0])
+                    df = pd.read_csv(csv_path)
+                    logging.info(f"Extracted and processing: {csv_files[0]}")
+                else:
+                    raise ValueError("No CSV files found in ZIP")
+            else:
+                raise ValueError(f"Unsupported file format: {filename}")
             
-            df_processed = df_filtered[['TrdSymb', 'OpnPric', 'HghPric', 'LwPric', 'ClsPric', 'TtlTradgVol']].copy()
-            df_processed.columns = ['Symbol', 'Open', 'High', 'Low', 'Close', 'Volume']
+            logging.info(f"Successfully read {len(df)} rows, {len(df.columns)} columns")
+            logging.info(f"📊 Columns: {df.columns.tolist()[:10]}...")  # Show first 10 columns
             
-        elif 'SYMBOL' in df.columns:  # Old format
-            df_filtered = df[df['SERIES'] == 'EQ'].copy()
+            # Create output filename based on input
+            base_name = filename.replace('.zip', '').replace('.csv', '').replace('.xlsx', '').replace('.CSV', '')
+            output_filename = f"Processed_{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            output_path = os.path.join(processed_dir, output_filename)
             
-            df_processed = df_filtered[['SYMBOL', 'OPEN', 'HIGH', 'LOW', 'CLOSE', 'TOTTRDQTY']].copy()
-            df_processed.columns = ['Symbol', 'Open', 'High', 'Low', 'Close', 'Volume']
-        else:
-            raise ValueError(f"Unknown NSE Bhavcopy format. Columns found: {df.columns.tolist()}")
+            # Save to Excel
+            with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name='Data', index=False)
+            
+            logging.info(f"💾 Saved processed file: {output_path}")
+            
+            return {
+                "status": "success",
+                "output_file": output_filename,
+                "rows_processed": len(df),
+                "columns": len(df.columns),
+                "message": f"Successfully processed {len(df)} rows with {len(df.columns)} columns"
+            }
+            
+        except pd.errors.EmptyDataError:
+            raise HTTPException(status_code=400, detail="File is empty or has no data")
+        except pd.errors.ParserError as e:
+            raise HTTPException(status_code=400, detail=f"Failed to parse file: {str(e)}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
         
-        # Sort by volume (highest first)
-        df_processed = df_processed.sort_values('Volume', ascending=False)
-        
-        # Create output filename
-        output_filename = f"NSE_Bhavcopy_Processed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-        output_path = os.path.join(processed_dir, output_filename)
-        
-        # Save to Excel with formatting
-        with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
-            df_processed.to_excel(writer, sheet_name='Equity_Data', index=False)
-        
-        logging.info(f"Saved processed file: {output_path}")
-        
-        return {
-            "status": "success",
-            "output_file": output_filename,
-            "rows_processed": len(df_processed),
-            "message": f"Successfully processed {len(df_processed)} equity stocks"
-        }
-        
+    except HTTPException:
+        raise
     except Exception as e:
-        logging.error(f"NSE Bhavcopy processing error: {str(e)}")
-        raise Exception(f"NSE Bhavcopy processing failed: {str(e)}")
-
-
-def process_nse_delivery(file_path):
-    """Process NSE Delivery data CSV files"""
-    try:
-        logging.info(f"Processing NSE Delivery: {file_path}")
-        
-        # Read CSV file
-        df = pd.read_csv(file_path)
-        
-        logging.info(f"Read {len(df)} rows from NSE Delivery data")
-        
-        # Select relevant columns
-        if 'SYMBOL' in df.columns and 'QTY_PER' in df.columns:
-            df_processed = df[['SYMBOL', 'QTY_PER', 'DELIV_QTY', 'TRADED_QTY']].copy()
-            df_processed.columns = ['Symbol', 'Delivery_%', 'Delivery_Qty', 'Traded_Qty']
-            
-            # Filter stocks with delivery % >= 50%
-            df_processed = df_processed[df_processed['Delivery_%'] >= 50]
-            
-            # Sort by delivery percentage (highest first)
-            df_processed = df_processed.sort_values('Delivery_%', ascending=False)
-        else:
-            raise ValueError(f"Unknown NSE Delivery format. Columns: {df.columns.tolist()}")
-        
-        # Create output filename
-        output_filename = f"NSE_Delivery_Processed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-        output_path = os.path.join(processed_dir, output_filename)
-        
-        # Save to Excel
-        with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
-            df_processed.to_excel(writer, sheet_name='High_Delivery', index=False)
-        
-        logging.info(f"Saved processed file: {output_path}")
-        
-        return {
-            "status": "success",
-            "output_file": output_filename,
-            "rows_processed": len(df_processed),
-            "message": f"Processed {len(df_processed)} stocks with delivery >= 50%"
-        }
-        
-    except Exception as e:
-        logging.error(f"NSE Delivery processing error: {str(e)}")
-        raise Exception(f"NSE Delivery processing failed: {str(e)}")
-
-
-def process_bse_bhavcopy(file_path):
-    """Process BSE Bhavcopy CSV files"""
-    try:
-        logging.info(f"Processing BSE Bhavcopy: {file_path}")
-        
-        # BSE files might be ZIP, extract if needed
-        if file_path.endswith('.ZIP') or file_path.endswith('.zip'):
-            extract_dir = os.path.dirname(file_path)
-            with zipfile.ZipFile(file_path, 'r') as zip_ref:
-                zip_ref.extractall(extract_dir)
-            
-            # Find the extracted CSV file
-            csv_files = [f for f in os.listdir(extract_dir) if f.endswith('.CSV')]
-            if csv_files:
-                file_path = os.path.join(extract_dir, csv_files[0])
-                logging.info(f"Extracted and processing: {csv_files[0]}")
-        
-        # Read CSV
-        df = pd.read_csv(file_path)
-        
-        logging.info(f"Read {len(df)} rows from BSE Bhavcopy")
-        
-        # Select columns
-        if 'SC_CODE' in df.columns:
-            df_processed = df[['SC_CODE', 'SC_NAME', 'OPEN', 'HIGH', 'LOW', 'CLOSE', 'NO_OF_SHRS']].copy()
-            df_processed.columns = ['Code', 'Name', 'Open', 'High', 'Low', 'Close', 'Volume']
-            
-            # Sort by volume
-            df_processed = df_processed.sort_values('Volume', ascending=False)
-        else:
-            raise ValueError(f"Unknown BSE format. Columns: {df.columns.tolist()}")
-        
-        # Create output filename
-        output_filename = f"BSE_Bhavcopy_Processed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-        output_path = os.path.join(processed_dir, output_filename)
-        
-        # Save to Excel
-        with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
-            df_processed.to_excel(writer, sheet_name='BSE_Data', index=False)
-        
-        logging.info(f"Saved processed file: {output_path}")
-        
-        return {
-            "status": "success",
-            "output_file": output_filename,
-            "rows_processed": len(df_processed),
-            "message": f"Processed {len(df_processed)} BSE records"
-        }
-        
-    except Exception as e:
-        logging.error(f"BSE processing error: {str(e)}")
-        raise Exception(f"BSE processing failed: {str(e)}")
-
+        logging.error(f"Processing error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ===== API ENDPOINTS =====
-
 @app.get("/")
 async def root():
     return {
         "message": "HomeStock Python Backend Running",
         "status": "ok",
-        "version": "0.3.0"
+        "version": "2.0.0 - Universal Processor"
     }
-
 
 
 @app.post("/api/start_download")
@@ -386,7 +354,7 @@ async def start_download(request: DownloadRequest):
         
         current_date = start_date
         while current_date <= end_date:
-            if current_date.weekday() < 5:
+            if current_date.weekday() < 5:  # Skip weekends
                 success, message = download_file(current_date.strftime('%Y-%m-%d'), request.job_type)
                 if success:
                     success_count += 1
@@ -409,65 +377,21 @@ async def start_download(request: DownloadRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
-@app.post("/api/process_excel")
-async def process_excel(request: ProcessRequest):
-    """Process downloaded CSV/Excel files and transform them"""
-    try:
-        file_path = request.file_path
-        
-        # If just filename is provided, make it absolute path
-        if not os.path.isabs(file_path):
-            file_path = os.path.join(downloads_dir, file_path)
-        
-        logging.info(f"Processing file: {file_path}")
-        
-        if not os.path.exists(file_path):
-            raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
-        
-        filename = os.path.basename(file_path)
-        
-        # Determine file type and process accordingly
-        if 'BhavCopy_NSE' in filename or 'bhav' in filename.lower():
-            result = process_nse_bhavcopy(file_path)
-        elif 'sec_bhavdata' in filename:
-            result = process_nse_delivery(file_path)
-        elif 'EQ' in filename and 'CSV' in filename.upper():
-            result = process_bse_bhavcopy(file_path)
-        else:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Unknown file format: {filename}. Supported: NSE Bhavcopy, NSE Delivery, BSE Bhavcopy"
-            )
-        
-        logging.info(f"Processing complete: {result['output_file']}")
-        return result
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logging.error(f"Processing error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-
 @app.get("/api/logs")
 async def get_logs():
     try:
         if os.path.exists(log_file):
             with open(log_file, 'r') as f:
                 logs = f.readlines()
-                return {"logs": logs[-100:]}
+                return {"logs": logs[-100:]}  # Return last 100 lines
         return {"logs": []}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
 @app.get("/api/settings")
 async def get_settings():
     return load_settings()
-
 
 
 @app.post("/api/settings")
@@ -485,7 +409,7 @@ async def save_settings(settings: SettingsModel):
             
             # Warn if time is before 6:30 PM
             if hour < 18 or (hour == 18 and minute < 30):
-                warning_message = "Warning: NSE data is typically available after 6:30 PM IST"
+                warning_message = "⚠️ Warning: NSE data is typically available after 6:30 PM IST"
                 logging.warning(f"Scheduler time {settings_dict['scheduler_time']} may be too early for data availability")
         
         # Save the new settings
@@ -497,35 +421,9 @@ async def save_settings(settings: SettingsModel):
             old_settings.get('scheduler_enabled') != settings_dict['scheduler_enabled']
         )
         
-        # If scheduler settings changed, restart it
-        if scheduler_changed and settings_dict['scheduler_enabled']:
-            try:
-                scheduler.remove_job('daily_download')
-                logging.info("Removed old scheduler job")
-            except:
-                pass
-            
-            # Add new job with updated time
-            time_parts = settings_dict['scheduler_time'].split(':')
-            hour = int(time_parts[0])
-            minute = int(time_parts[1])
-            
-            scheduler.add_job(
-                scheduled_task,
-                'cron',
-                hour=hour,
-                minute=minute,
-                id='daily_download',
-                replace_existing=True
-            )
-            logging.info(f"Scheduler restarted with new time: {settings_dict['scheduler_time']}")
-            
-        elif scheduler_changed and not settings_dict['scheduler_enabled']:
-            try:
-                scheduler.remove_job('daily_download')
-                logging.info("Scheduler disabled and job removed")
-            except:
-                pass
+        # If scheduler settings changed, reload it
+        if scheduler_changed:
+            reload_scheduler_from_settings()
         
         logging.info("Settings saved successfully")
         
@@ -545,29 +443,14 @@ async def save_settings(settings: SettingsModel):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
 @app.post("/api/scheduler/start")
 async def start_scheduler():
     try:
-        settings = load_settings()
-        time_parts = settings['scheduler_time'].split(':')
-        hour = int(time_parts[0])
-        minute = int(time_parts[1])
-        
-        scheduler.add_job(
-            scheduled_task,
-            'cron',
-            hour=hour,
-            minute=minute,
-            id='daily_download',
-            replace_existing=True
-        )
-        logging.info(f"Scheduler started for {settings['scheduler_time']}")
-        return {"status": "success", "message": f"Scheduler started for {settings['scheduler_time']}"}
+        reload_scheduler_from_settings()
+        return {"status": "success", "message": "Scheduler started"}
     except Exception as e:
         logging.error(f"Scheduler start error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @app.post("/api/scheduler/stop")
@@ -576,9 +459,8 @@ async def stop_scheduler():
         scheduler.remove_job('daily_download')
         logging.info("Scheduler stopped")
         return {"status": "success", "message": "Scheduler stopped"}
-    except Exception as e:
+    except:
         return {"status": "error", "message": "No active scheduler"}
-
 
 
 @app.get("/api/scheduler/status")
@@ -610,9 +492,7 @@ async def scheduler_status():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
 # ===== FILE MANAGEMENT ENDPOINTS =====
-
 @app.get("/api/files/downloaded")
 async def get_downloaded_files():
     """Get list of downloaded files with metadata"""
@@ -640,7 +520,6 @@ async def get_downloaded_files():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
 @app.get("/api/files/processed")
 async def get_processed_files():
     """Get list of processed files with metadata"""
@@ -666,7 +545,6 @@ async def get_processed_files():
     except Exception as e:
         logging.error(f"Error getting processed files: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @app.get("/api/files/download/{file_type}/{filename}")
@@ -712,7 +590,6 @@ async def download_file_endpoint(file_type: str, filename: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
 @app.delete("/api/files/{file_type}/{filename}")
 async def delete_file_endpoint(file_type: str, filename: str):
     """Delete a specific file from server"""
@@ -751,7 +628,6 @@ async def delete_file_endpoint(file_type: str, filename: str):
     except Exception as e:
         logging.error(f"File deletion error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @app.get("/api/files/stats")
@@ -794,13 +670,28 @@ async def get_files_stats():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
 if __name__ == "__main__":
     print("=" * 60)
-    print("HomeStock Python Backend")
+    print("HomeStock Python Backend v2.0")
     print("=" * 60)
-    print("Starting on http://127.0.0.1:8000")
-    print("Default scheduler time: 18:45 (6:45 PM IST)")
-    print("NSE data is typically available after 6:30 PM IST")
+    print("Universal File Processor Enabled")
+    print("NSE Bhavcopy URL Fixed (Dec 2025)")
+    print("Scheduler Ready")
     print("=" * 60)
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
+    print("Server: http://127.0.0.1:8000")
+    print("Port: 8000")
+    print("=" * 60)
+    
+    try:
+        uvicorn.run(
+            app,
+            host="127.0.0.1",
+            port=8000,
+            log_level="info"
+        )
+    except Exception as e:
+        print(f"Error starting server: {e}")
+    
+    print("=" * 60)
+    print("🛑 Server shutdown")
+    print("=" * 60)
