@@ -96,7 +96,8 @@
             "target": [
                 "nsis"
             ],
-            "icon": "public/icon.ico"
+            "icon": "public/icon.ico",
+            "sign": null
         },
         "nsis": {
             "oneClick": false,
