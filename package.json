@@ -97,7 +97,7 @@
                 "nsis"
             ],
             "icon": "public/icon.ico",
-            "sign": null
+            "signAndEditExecutable": false
         },
         "nsis": {
             "oneClick": false,
