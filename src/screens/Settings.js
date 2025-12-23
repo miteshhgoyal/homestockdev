@@ -274,7 +274,7 @@ function Settings() {
                                 {isEarlySchedulerTime() && (
                                     <div className="bg-amber-50 border-2 border-amber-200 rounded-lg" style={{ padding: '12px', marginTop: '8px' }}>
                                         <div className="flex items-start" style={{ gap: '8px' }}>
-                                            <AlertTriangle size={16} className="text-amber-600 flex-shrink-0" style={{ marginTop: '2px' }} />
+                                            <AlertTriangle size={16} className="text-amber-600 shrink-0" style={{ marginTop: '2px' }} />
                                             <div>
                                                 <p className="text-sm font-semibold text-amber-800" style={{ marginBottom: '4px' }}>
                                                     Early Scheduler Time
@@ -466,7 +466,7 @@ function Settings() {
                 <div className="bg-linear-to-r from-slate-800 to-slate-900 rounded-2xl shadow-lg border border-slate-700"
                     style={{ marginTop: '24px', padding: '24px' }}>
                     <div className="flex items-start" style={{ gap: '16px' }}>
-                        <div className="bg-white/10 backdrop-blur-sm rounded-xl flex-shrink-0" style={{ padding: '12px' }}>
+                        <div className="bg-white/10 backdrop-blur-sm rounded-xl shrink-0" style={{ padding: '12px' }}>
                             <Info className="text-blue-400" size={20} />
                         </div>
                         <div className="flex-1">

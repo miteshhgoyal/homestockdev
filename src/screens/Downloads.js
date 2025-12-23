@@ -393,7 +393,7 @@ function Downloads() {
                         {result && (
                             <div className={`rounded-2xl shadow-lg border-2 transition-all ${result.type === 'success' ? 'bg-linear-to-br from-emerald-50 to-green-50 border-emerald-200' : 'bg-linear-to-br from-red-50 to-rose-50 border-red-200'}`} style={{ marginTop: '24px', padding: '24px' }}>
                                 <div className="flex items-start" style={{ gap: '16px' }}>
-                                    <div className={`rounded-xl flex-shrink-0 ${result.type === 'success' ? 'bg-emerald-100' : 'bg-red-100'}`} style={{ padding: '12px' }}>
+                                    <div className={`rounded-xl shrink-0 ${result.type === 'success' ? 'bg-emerald-100' : 'bg-red-100'}`} style={{ padding: '12px' }}>
                                         {result.type === 'success' ? (
                                             <CheckCircle2 className="text-emerald-600" size={24} strokeWidth={2.5} />
                                         ) : (
@@ -411,7 +411,7 @@ function Downloads() {
                                             <ul className="text-xs font-mono" style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                                 {result.details.slice(0, 5).map((detail, idx) => (
                                                     <li key={idx} className="flex items-start" style={{ gap: '8px' }}>
-                                                        <span className={`inline-block w-1.5 h-1.5 rounded-full flex-shrink-0 ${result.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`} style={{ marginTop: '6px' }}></span>
+                                                        <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${result.type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`} style={{ marginTop: '6px' }}></span>
                                                         <span className="font-mono text-xs">{detail}</span>
                                                     </li>
                                                 ))}
@@ -425,7 +425,7 @@ function Downloads() {
                         {/* Info Card */}
                         <div className="bg-linear-to-r from-slate-800 to-slate-900 rounded-2xl shadow-lg border border-slate-700" style={{ marginTop: '24px', padding: '24px' }}>
                             <div className="flex items-start" style={{ gap: '16px' }}>
-                                <div className="bg-white/10 backdrop-blur-sm rounded-xl flex-shrink-0" style={{ padding: '12px' }}>
+                                <div className="bg-white/10 backdrop-blur-sm rounded-xl shrink-0" style={{ padding: '12px' }}>
                                     <AlertCircle className="text-blue-400" size={20} />
                                 </div>
                                 <div className="flex-1">

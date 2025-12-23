@@ -228,7 +228,7 @@ function Dashboard() {
             {/* Info Alert */}
             <div className="bg-linear-to-r from-blue-500 to-blue-600 rounded-2xl shadow-lg border border-blue-400" style={{ padding: '24px' }}>
                 <div className="flex items-start" style={{ gap: '16px' }}>
-                    <div className="bg-white/20 backdrop-blur-sm rounded-xl flex-shrink-0" style={{ padding: '12px' }}>
+                    <div className="bg-white/20 backdrop-blur-sm rounded-xl shrink-0" style={{ padding: '12px' }}>
                         <Lightbulb className="text-white" size={24} strokeWidth={2.5} />
                     </div>
                     <div className="flex-1">

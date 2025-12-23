@@ -42,7 +42,7 @@ function Sidebar({ activeScreen, setActiveScreen }) {
                                     }`}
                                 style={{ paddingLeft: '16px', paddingRight: '16px', gap: '12px' }}
                             >
-                                <Icon size={20} strokeWidth={2} className="flex-shrink-0" />
+                                <Icon size={20} strokeWidth={2} className="shrink-0" />
                                 <span className="font-medium text-sm">{item.label}</span>
                             </button>
                         );

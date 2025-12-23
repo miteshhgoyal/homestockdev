@@ -75,15 +75,15 @@ function Logs() {
     const getLogIcon = (level) => {
         switch (level) {
             case 'error':
-                return <XCircle size={14} className="text-red-400 flex-shrink-0" />;
+                return <XCircle size={14} className="text-red-400 shrink-0" />;
             case 'warning':
-                return <AlertTriangle size={14} className="text-amber-400 flex-shrink-0" />;
+                return <AlertTriangle size={14} className="text-amber-400 shrink-0" />;
             case 'success':
-                return <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />;
+                return <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />;
             case 'info':
-                return <Info size={14} className="text-blue-400 flex-shrink-0" />;
+                return <Info size={14} className="text-blue-400 shrink-0" />;
             default:
-                return <Terminal size={14} className="text-gray-400 flex-shrink-0" />;
+                return <Terminal size={14} className="text-gray-400 shrink-0" />;
         }
     };
 
@@ -401,7 +401,7 @@ function Logs() {
             <div className="bg-linear-to-r from-slate-800 to-slate-900 rounded-2xl shadow-lg border border-slate-700"
                 style={{ marginTop: '24px', padding: '24px' }}>
                 <div className="flex items-start" style={{ gap: '16px' }}>
-                    <div className="bg-white/10 backdrop-blur-sm rounded-xl flex-shrink-0" style={{ padding: '12px' }}>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-xl shrink-0" style={{ padding: '12px' }}>
                         <Info className="text-blue-400" size={20} />
                     </div>
                     <div className="flex-1">
