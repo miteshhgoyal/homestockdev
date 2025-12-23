@@ -193,7 +193,7 @@ function Settings() {
 
                             {/* Download Path */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <label className="block text-sm font-semibold text-slate-700 flex items-center" style={{ gap: '8px' }}>
+                                <label className="text-sm font-semibold text-slate-700 flex items-center" style={{ gap: '8px' }}>
                                     <FolderInput size={16} className="text-blue-500" />
                                     Download Path
                                 </label>
@@ -216,7 +216,7 @@ function Settings() {
 
                             {/* Processed Path */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <label className="block text-sm font-semibold text-slate-700 flex items-center" style={{ gap: '8px' }}>
+                                <label className="text-sm font-semibold text-slate-700 flex items-center" style={{ gap: '8px' }}>
                                     <FolderOutput size={16} className="text-purple-500" />
                                     Processed Path
                                 </label>
@@ -252,7 +252,7 @@ function Settings() {
 
                             {/* Scheduler Time */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <label className="block text-sm font-semibold text-slate-700 flex items-center" style={{ gap: '8px' }}>
+                                <label className="text-sm font-semibold text-slate-700 flex items-center" style={{ gap: '8px' }}>
                                     <Clock size={16} className="text-indigo-500" />
                                     Scheduled Time
                                 </label>
@@ -291,7 +291,7 @@ function Settings() {
 
                             {/* Manual Date Selection for Testing */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <label className="block text-sm font-semibold text-slate-700 flex items-center" style={{ gap: '8px' }}>
+                                <label className="text-sm font-semibold text-slate-700 flex items-center" style={{ gap: '8px' }}>
                                     <Calendar size={16} className="text-purple-500" />
                                     Manual Download Date (For Testing)
                                 </label>
