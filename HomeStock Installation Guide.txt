@@ -1,0 +1,117 @@
+================================================================
+HOMESTOCK - STOCK MARKET AUTOMATION TOOL
+Installation & User Guide
+================================================================
+
+📥 INSTALLATION
+
+1. Download: HomeStock Setup 0.1.0.exe
+2. Double-click the installer
+3. Follow installation wizard
+4. Choose install location (default: C:\Program Files\HomeStock)
+5. Click "Install"
+6. Click "Finish"
+
+✅ App will be installed with:
+   - Desktop shortcut
+   - Start Menu entry
+
+================================================================
+
+🚀 FIRST TIME SETUP
+
+1. Open HomeStock from desktop shortcut
+2. Wait 3-5 seconds for backend to start
+3. Go to Settings tab
+4. Configure scheduler:
+   - Set time: 18:45 (6:45 PM IST)
+   - Enable scheduler ✅
+5. Close app (minimizes to system tray)
+
+================================================================
+
+📊 HOW TO USE
+
+MANUAL DOWNLOAD:
+1. Go to "Downloads" tab
+2. Select date range (From/To dates)
+3. Choose job type (NSE Bhavcopy recommended)
+4. Click "Start Download"
+5. Files download to: C:\Users\YourName\HomeStock\downloads\
+
+PROCESS FILES:
+1. Go to "Downloaded Files" section
+2. Click "Process" button next to any file
+3. Processed Excel files saved to: C:\Users\YourName\HomeStock\processed\
+
+AUTOMATED DAILY DOWNLOADS:
+1. Set scheduler time in Settings (e.g., 18:45)
+2. Enable scheduler ✅
+3. Close app (minimizes to tray, doesn't quit)
+4. App runs in background
+5. Downloads happen automatically at scheduled time
+6. Check "Processed Files" tab for results
+
+================================================================
+
+📁 FILE LOCATIONS
+
+All files stored locally on your computer:
+
+C:\Users\YourName\HomeStock\
+├── downloads\    ← Downloaded NSE/BSE files
+├── processed\    ← Processed Excel files
+└── logs\         ← Application logs
+
+================================================================
+
+🔔 SYSTEM TRAY FEATURES
+
+When you close HomeStock:
+- ✅ App minimizes to system tray (doesn't quit)
+- ✅ Python backend keeps running
+- ✅ Scheduler continues working
+
+To SHOW app again:
+- Double-click tray icon
+- OR Right-click → "Show HomeStock"
+
+To FULLY QUIT app:
+- Right-click tray icon → "Quit HomeStock"
+
+================================================================
+
+⚙️ SYSTEM REQUIREMENTS
+
+- Windows 10/11 (64-bit)
+- 4 GB RAM minimum
+- 500 MB free disk space
+- Internet connection (for downloading NSE/BSE data)
+
+================================================================
+
+❓ TROUBLESHOOTING
+
+Q: App shows black screen on startup?
+A: Wait 3-5 seconds - Python backend is starting.
+
+Q: Downloads fail?
+A: NSE data is only available after 6:30 PM IST on trading days.
+
+Q: Scheduler not working?
+A: Make sure app is running in system tray (not fully closed).
+
+Q: Where are my files?
+A: Check C:\Users\YourName\HomeStock\downloads\ and \processed\
+
+Q: How to update scheduler time?
+A: Go to Settings → Change time → Click "Save Settings"
+
+================================================================
+
+📞 SUPPORT
+
+For issues or questions, check the Logs tab in the app for
+detailed error messages.
+
+================================================================
