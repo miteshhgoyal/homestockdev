@@ -29,8 +29,8 @@ function Downloads() {
 
     const jobTypeOptions = [
         { value: 'NSE Bhavcopy', icon: TrendingDown, color: 'text-blue-600', bgColor: 'bg-blue-50' },
-        { value: 'NSE Delivery', icon: FileDown, color: 'text-purple-600', bgColor: 'bg-purple-50' },
-        { value: 'BSE Bhavcopy', icon: FileText, color: 'text-green-600', bgColor: 'bg-green-50' }
+        // { value: 'NSE Delivery', icon: FileDown, color: 'text-purple-600', bgColor: 'bg-purple-50' },
+        // { value: 'BSE Bhavcopy', icon: FileText, color: 'text-green-600', bgColor: 'bg-green-50' }
     ];
 
     useEffect(() => {

@@ -22,6 +22,7 @@ function Logs() {
     const [loading, setLoading] = useState(false);
     const [filterLevel, setFilterLevel] = useState('all');
     const [autoScroll, setAutoScroll] = useState(true);
+    const [autoRefresh, setAutoRefresh] = useState(true);
     const [sortOrder, setSortOrder] = useState('newest'); // 'newest' or 'oldest'
     const logsEndRef = useRef(null);
     const logsContainerRef = useRef(null);
@@ -41,9 +42,22 @@ function Logs() {
     };
 
 
+    // Initial fetch on mount
     useEffect(() => {
         fetchLogs();
     }, []);
+
+
+    // Auto-refresh every 3 seconds when enabled
+    useEffect(() => {
+        if (!autoRefresh) return;
+
+        const intervalId = setInterval(() => {
+            fetchLogs();
+        }, 3000); // Refresh every 3 seconds
+
+        return () => clearInterval(intervalId); // Cleanup on unmount
+    }, [autoRefresh]);
 
 
     // Auto-scroll to bottom when logs update or sort order changes
@@ -169,6 +183,11 @@ function Logs() {
                         <p className="text-slate-600 flex items-center" style={{ gap: '8px' }}>
                             <FileText size={16} />
                             Application logs and activity history
+                            {autoRefresh && (
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">
+                                    ● Auto-refreshing (3s)
+                                </span>
+                            )}
                         </p>
                     </div>
                     <div className="flex items-center" style={{ gap: '12px' }}>
@@ -217,7 +236,6 @@ function Logs() {
                         </div>
                     </div>
 
-
                     <div className="bg-white rounded-xl border border-red-200 shadow-sm" style={{ padding: '16px' }}>
                         <div className="flex items-center justify-between">
                             <div>
@@ -230,7 +248,6 @@ function Logs() {
                         </div>
                     </div>
 
-
                     <div className="bg-white rounded-xl border border-amber-200 shadow-sm" style={{ padding: '16px' }}>
                         <div className="flex items-center justify-between">
                             <div>
@@ -242,7 +259,6 @@ function Logs() {
                             </div>
                         </div>
                     </div>
-
 
                     <div className="bg-white rounded-xl border border-emerald-200 shadow-sm" style={{ padding: '16px' }}>
                         <div className="flex items-center justify-between">
@@ -302,6 +318,17 @@ function Logs() {
                     >
                         Auto-scroll
                     </button>
+                    <button
+                        onClick={() => setAutoRefresh(!autoRefresh)}
+                        className={`flex items-center rounded-lg transition-all font-medium text-sm ${autoRefresh
+                            ? 'bg-green-600 text-white'
+                            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                            }`}
+                        style={{ gap: '6px', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px' }}
+                    >
+                        <RefreshCw size={14} className={autoRefresh ? 'animate-spin' : ''} />
+                        Auto-refresh (3s)
+                    </button>
                 </div>
             </div>
 
@@ -326,7 +353,6 @@ function Logs() {
                     </div>
                 </div>
 
-
                 <div
                     ref={logsContainerRef}
                     className="bg-slate-950 text-gray-300 font-mono text-sm overflow-y-auto"
@@ -339,7 +365,7 @@ function Logs() {
                         </div>
                     ) : sortedLogs.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-slate-600">
-                            <AlertCircle size={48} style={{ marginBottom: '16px', opacity: '0.5' }} />
+                            <AlertCircle size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
                             <p className="text-lg font-semibold">No logs available</p>
                             <p className="text-sm" style={{ marginTop: '8px' }}>Logs will appear here once generated</p>
                         </div>
@@ -347,9 +373,8 @@ function Logs() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                             {sortedLogs.map((log, idx) => {
                                 const level = getLogLevel(log);
-                                const originalIndex = sortOrder === 'newest'
-                                    ? filteredLogs.length - idx
-                                    : idx + 1;
+                                const originalIndex = sortOrder === 'newest' ? filteredLogs.length - idx : idx + 1;
+
                                 return (
                                     <div
                                         key={idx}
@@ -368,38 +393,15 @@ function Logs() {
                                     </div>
                                 );
                             })}
-                            <div ref={logsEndRef} />
+                            <div ref={logsEndRef}></div>
                         </div>
                     )}
                 </div>
-
-                {/* Scroll to Top/Bottom Buttons */}
-                {sortedLogs.length > 10 && (
-                    <div className="absolute bottom-6 right-6 flex flex-col" style={{ gap: '8px' }}>
-                        <button
-                            onClick={scrollToTop}
-                            className="bg-slate-800 hover:bg-slate-700 text-white rounded-lg shadow-lg transition-all"
-                            style={{ padding: '10px' }}
-                            title="Scroll to top"
-                        >
-                            <ArrowUp size={18} />
-                        </button>
-                        <button
-                            onClick={scrollToBottom}
-                            className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg transition-all"
-                            style={{ padding: '10px' }}
-                            title="Scroll to bottom"
-                        >
-                            <ArrowDown size={18} />
-                        </button>
-                    </div>
-                )}
             </div>
 
 
             {/* Info Footer */}
-            <div className="bg-linear-to-r from-slate-800 to-slate-900 rounded-2xl shadow-lg border border-slate-700"
-                style={{ marginTop: '24px', padding: '24px' }}>
+            <div className="bg-linear-to-r from-slate-800 to-slate-900 rounded-2xl shadow-lg border border-slate-700" style={{ marginTop: '24px', padding: '24px' }}>
                 <div className="flex items-start" style={{ gap: '16px' }}>
                     <div className="bg-white/10 backdrop-blur-sm rounded-xl shrink-0" style={{ padding: '12px' }}>
                         <Info className="text-blue-400" size={20} />
@@ -409,7 +411,7 @@ function Logs() {
                         <ul className="text-slate-300 text-sm" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             <li className="flex items-center" style={{ gap: '8px' }}>
                                 <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
-                                Logs are shown newest first by default for easy monitoring
+                                Logs auto-refresh every 3 seconds when enabled
                             </li>
                             <li className="flex items-center" style={{ gap: '8px' }}>
                                 <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
@@ -419,6 +421,10 @@ function Logs() {
                                 <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
                                 Auto-scroll keeps the latest logs visible automatically
                             </li>
+                            <li className="flex items-center" style={{ gap: '8px' }}>
+                                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+                                Logs are flushed instantly to disk for real-time monitoring
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -426,6 +432,5 @@ function Logs() {
         </div>
     );
 }
-
 
 export default Logs;
