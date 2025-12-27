@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../services/api';
 import {
     FileText,
@@ -16,19 +16,18 @@ import {
     ArrowUp
 } from 'lucide-react';
 
-
 function Logs() {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(false);
     const [filterLevel, setFilterLevel] = useState('all');
     const [autoScroll, setAutoScroll] = useState(true);
     const [autoRefresh, setAutoRefresh] = useState(true);
-    const [sortOrder, setSortOrder] = useState('newest'); // 'newest' or 'oldest'
+    const [sortOrder, setSortOrder] = useState('newest');
     const logsEndRef = useRef(null);
     const logsContainerRef = useRef(null);
 
-
-    const fetchLogs = async () => {
+    // Wrap fetchLogs in useCallback to prevent infinite re-renders
+    const fetchLogs = useCallback(async () => {
         setLoading(true);
         try {
             const response = await api.getLogs();
@@ -39,14 +38,12 @@ function Logs() {
         } finally {
             setLoading(false);
         }
-    };
-
+    }, []); // Empty dependency array since api.getLogs is stable
 
     // Initial fetch on mount
     useEffect(() => {
         fetchLogs();
-    }, []);
-
+    }, [fetchLogs]);
 
     // Auto-refresh every 3 seconds when enabled
     useEffect(() => {
@@ -54,27 +51,17 @@ function Logs() {
 
         const intervalId = setInterval(() => {
             fetchLogs();
-        }, 3000); // Refresh every 3 seconds
+        }, 15000);
 
-        return () => clearInterval(intervalId); // Cleanup on unmount
-    }, [autoRefresh]);
+        return () => clearInterval(intervalId);
+    }, [autoRefresh, fetchLogs]); // Added fetchLogs to dependencies
 
-
-    // Auto-scroll to bottom when logs update or sort order changes
+    // Auto-scroll when logs update
     useEffect(() => {
         if (autoScroll && logsEndRef.current) {
             logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [logs, filterLevel, sortOrder, autoScroll]);
-
-
-    // Scroll to bottom on initial load
-    useEffect(() => {
-        if (logsEndRef.current) {
-            logsEndRef.current.scrollIntoView({ behavior: 'auto' });
-        }
-    }, []);
-
 
     const getLogLevel = (log) => {
         const logStr = log.toLowerCase();
@@ -84,7 +71,6 @@ function Logs() {
         if (logStr.includes('info')) return 'info';
         return 'default';
     };
-
 
     const getLogIcon = (level) => {
         switch (level) {
@@ -101,7 +87,6 @@ function Logs() {
         }
     };
 
-
     const getLogColor = (level) => {
         switch (level) {
             case 'error':
@@ -117,18 +102,15 @@ function Logs() {
         }
     };
 
-
     const filteredLogs = logs.filter(log => {
         if (filterLevel === 'all') return true;
         return getLogLevel(log) === filterLevel;
     });
 
-
-    // Sort logs based on order (newest first by default)
+    // Always show newest first (reverse the array)
     const sortedLogs = sortOrder === 'newest'
         ? [...filteredLogs].reverse()
         : filteredLogs;
-
 
     const logStats = {
         total: logs.length,
@@ -136,7 +118,6 @@ function Logs() {
         warning: logs.filter(log => getLogLevel(log) === 'warning').length,
         success: logs.filter(log => getLogLevel(log) === 'success').length
     };
-
 
     const exportLogs = () => {
         const logsText = logs.join('\n');
@@ -151,13 +132,11 @@ function Logs() {
         URL.revokeObjectURL(url);
     };
 
-
     const clearLogs = () => {
         if (window.confirm('Are you sure you want to clear all logs?')) {
             setLogs([]);
         }
     };
-
 
     const scrollToBottom = () => {
         if (logsEndRef.current) {
@@ -165,13 +144,11 @@ function Logs() {
         }
     };
 
-
     const scrollToTop = () => {
         if (logsContainerRef.current) {
             logsContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
-
 
     return (
         <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-slate-100" style={{ padding: '32px' }}>
@@ -185,7 +162,7 @@ function Logs() {
                             Application logs and activity history
                             {autoRefresh && (
                                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">
-                                    ● Auto-refreshing (3s)
+                                    ● Auto-refreshing (15s)
                                 </span>
                             )}
                         </p>
@@ -220,7 +197,6 @@ function Logs() {
                         </button>
                     </div>
                 </div>
-
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-4" style={{ gap: '16px' }}>
@@ -274,7 +250,6 @@ function Logs() {
                 </div>
             </div>
 
-
             {/* Filter Tabs and Controls */}
             <div className="flex items-center justify-between" style={{ marginBottom: '16px' }}>
                 <div className="flex items-center" style={{ gap: '8px' }}>
@@ -327,11 +302,10 @@ function Logs() {
                         style={{ gap: '6px', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px' }}
                     >
                         <RefreshCw size={14} className={autoRefresh ? 'animate-spin' : ''} />
-                        Auto-refresh (3s)
+                        Auto-refresh (15s)
                     </button>
                 </div>
             </div>
-
 
             {/* Log Console */}
             <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden relative">
@@ -358,7 +332,7 @@ function Logs() {
                     className="bg-slate-950 text-gray-300 font-mono text-sm overflow-y-auto"
                     style={{ padding: '24px', height: '600px' }}
                 >
-                    {loading ? (
+                    {loading && logs.length === 0 ? (
                         <div className="flex items-center text-blue-400" style={{ gap: '12px' }}>
                             <Loader2 size={18} className="animate-spin" />
                             <span>Loading logs...</span>
@@ -371,9 +345,10 @@ function Logs() {
                         </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div ref={logsEndRef}></div>
                             {sortedLogs.map((log, idx) => {
                                 const level = getLogLevel(log);
-                                const originalIndex = sortOrder === 'newest' ? filteredLogs.length - idx : idx + 1;
+                                const originalIndex = logs.length - idx;
 
                                 return (
                                     <div
@@ -393,12 +368,10 @@ function Logs() {
                                     </div>
                                 );
                             })}
-                            <div ref={logsEndRef}></div>
                         </div>
                     )}
                 </div>
             </div>
-
 
             {/* Info Footer */}
             <div className="bg-linear-to-r from-slate-800 to-slate-900 rounded-2xl shadow-lg border border-slate-700" style={{ marginTop: '24px', padding: '24px' }}>
@@ -411,7 +384,7 @@ function Logs() {
                         <ul className="text-slate-300 text-sm" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             <li className="flex items-center" style={{ gap: '8px' }}>
                                 <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
-                                Logs auto-refresh every 3 seconds when enabled
+                                Logs auto-refresh every 15 seconds when enabled
                             </li>
                             <li className="flex items-center" style={{ gap: '8px' }}>
                                 <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>

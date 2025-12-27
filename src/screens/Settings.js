@@ -313,7 +313,7 @@ function Settings() {
                                             className="absolute top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-600"
                                             style={{ right: '16px' }}
                                         >
-                                            ✕
+
                                         </button>
                                     )}
                                 </div>

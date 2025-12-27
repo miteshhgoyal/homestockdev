@@ -189,7 +189,7 @@ def download_file(date_str, job_type):
 def scheduled_download_task():
     """Task that runs on schedule - downloads NSE Bhavcopy for configured date"""
     try:
-        logging.info("🔔 Running scheduled download task")
+        logging.info(" Running scheduled download task")
         
         settings = load_settings()
         manual_date = settings.get('scheduler_manual_date', None)
@@ -242,7 +242,7 @@ def reload_scheduler_from_settings():
                 id='daily_download',
                 replace_existing=True
             )
-            logging.info(f"📅 Scheduler loaded: Daily job at {scheduler_time}")
+            logging.info(f" Scheduler loaded: Daily job at {scheduler_time}")
         else:
             logging.info("Scheduler disabled in settings")
     except Exception as e:
@@ -262,7 +262,7 @@ async def process_excel(request: ProcessRequest):
         if not os.path.isabs(file_path):
             file_path = os.path.join(downloads_dir, file_path)
         
-        logging.info(f"📄 Processing file: {file_path}")
+        logging.info(f" Processing file: {file_path}")
         
         if not os.path.exists(file_path):
             raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
@@ -294,7 +294,7 @@ async def process_excel(request: ProcessRequest):
                 raise ValueError(f"Unsupported file format: {filename}")
             
             logging.info(f"Successfully read {len(df)} rows, {len(df.columns)} columns")
-            logging.info(f"📊 Columns: {df.columns.tolist()[:10]}...")
+            logging.info(f" Columns: {df.columns.tolist()[:10]}...")
             
             base_name = filename.replace('.zip', '').replace('.csv', '').replace('.xlsx', '').replace('.CSV', '')
             output_filename = f"Processed_{base_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
@@ -303,7 +303,7 @@ async def process_excel(request: ProcessRequest):
             with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
                 df.to_excel(writer, sheet_name='Data', index=False)
             
-            logging.info(f"💾 Saved processed file: {output_path}")
+            logging.info(f" Saved processed file: {output_path}")
             
             return {
                 "status": "success",
@@ -408,7 +408,7 @@ async def save_settings(settings: SettingsModel):
             minute = int(time_parts[1])
             
             if hour < 18 or (hour == 18 and minute < 30):
-                warning_message = "⚠️ Warning: NSE data is typically available after 6:30 PM IST"
+                warning_message = "️ Warning: NSE data is typically available after 6:30 PM IST"
                 logging.warning(f"Scheduler time {settings_dict['scheduler_time']} may be too early for data availability")
         
         save_settings_file(settings_dict)
@@ -656,10 +656,10 @@ if __name__ == "__main__":
     print("=" * 60)
     print("HomeStock Python Backend v2.0.1")
     print("=" * 60)
-    print("✅ Universal File Processor Enabled")
-    print("✅ NSE Bhavcopy URL Fixed (Dec 2025)")
-    print("✅ Scheduler Ready")
-    print("✅ Instant Log Flushing Enabled")
+    print(" Universal File Processor Enabled")
+    print(" NSE Bhavcopy URL Fixed (Dec 2025)")
+    print(" Scheduler Ready")
+    print(" Instant Log Flushing Enabled")
     print("=" * 60)
     print("Server: http://127.0.0.1:8000")
     print("Port: 8000")
@@ -676,5 +676,5 @@ if __name__ == "__main__":
         print(f"Error starting server: {e}")
     
     print("=" * 60)
-    print("🛑 Server shutdown")
+    print(" Server shutdown")
     print("=" * 60)
